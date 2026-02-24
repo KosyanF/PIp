@@ -1,0 +1,20 @@
+{
+  "sol": {
+    "id": "sol",
+    "username": "Sol",
+    "state": {
+      "home": {
+        "quests": []
+      }
+    }
+  },
+  "blake": {
+    "id": "blake",
+    "username": "Blake",
+    "state": {
+      "home": {
+        "quests": []
+      }
+    }
+  }
+}

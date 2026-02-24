@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru" class="theme-retro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stable-Tec OS v1.0</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="container">
+    <!-- ЛОГИН -->
+    <div id="login-screen">
+        <div class="logo"><img src="/emblem.png" alt="Stable-Tec" width="100" height="100" style="object-fit:contain;"></div>
+        <h2>STABLE-TEC OS v1.0</h2>
+        <div id="error-msg" class="text-danger mb-sm"></div>
+        <input type="text" id="username" placeholder="Введите имя жителя..." maxlength="20">
+        <button onclick="login()">ВОЙТИ В СИСТЕМУ</button><br><br>
+        <button onclick="showGMLogin()" class="btn--subtle">[Доступ Смотрителя]</button>
+    </div>
+    <!-- ЛОГИН GM -->
+    <div id="gm-login" class="hidden text-center" style="margin-top:20vh;">
+        <h2>ВВЕДИТЕ КОД ДОСТУПА</h2>
+        <input type="password" id="gm-pass">
+        <button onclick="gmLogin()">АВТОРИЗАЦИЯ</button><br><br>
+        <button onclick="location.reload()" class="btn--subtle">[Назад]</button>
+    </div>
+    <!-- ИГРОК -->
+    <div id="pipboy-screen" class="hidden">
+        <div class="d-flex justify-between items-center mb-sm">
+            <span id="player-name-display" style="font-weight:bold;font-size:1.2em;">ID: UNKNOWN</span>
+            <div class="d-flex items-center gap-sm">
+                <span id="conn-indicator" class="connection-status connection-status--ok" title="Подключено"></span>
+                <span id="clock" style="margin-right:10px;">00:00:00</span>
+                <button onclick="logout()" class="btn--compact" style="border-style:dashed;">[ВЫЙТИ]</button>
+            </div>
+        </div>
+        <div class="nav-tabs" id="nav-tabs"></div>
+        <div id="module-content" class="module-container"><h3 class="text-center" style="margin-top:50px;">ОЖИДАНИЕ ЗАГРУЗКИ МОДУЛЕЙ...</h3></div>
+    </div>
+    <!-- GM ЭКРАН -->
+    <div id="gm-screen" class="hidden">
+        <div class="d-flex justify-between items-center flex-shrink-0 mb-sm"><h2 class="m-0">ТЕРМИНАЛ СМОТРИТЕЛЯ</h2><button onclick="logout()" class="btn--compact">ВЫЙТИ</button></div>
+        <div id="gm-nav">
+            <button class="gm-tab active" onclick="switchGMTab('players')">ЖИТЕЛИ</button>
+            <button class="gm-tab" onclick="switchGMTab('quests')">КВЕСТЫ</button>
+            <button class="gm-tab" onclick="switchGMTab('radio')">РАДИО</button>
+            <button class="gm-tab" onclick="switchGMTab('map')">КАРТА</button>
+        </div>
+        <div id="gm-panel-players" class="gm-panel active"><div class="gm-panel-scroll"><div id="gm-players-container" class="gm-player-cards"><div class="text-muted text-center p-md">Ожидание данных...</div></div></div></div>
+        <div id="gm-panel-quests" class="gm-panel"><div class="gm-panel-scroll d-flex-col gap-md" style="padding-bottom:10px;">
+            <div class="gq-section"><div class="gq-section-title">Выдать квест</div><div class="gq-section-title" style="margin-top:0;opacity:0.4;">Игроки:</div><div class="gq-player-list" id="gq-player-chips"><span class="text-muted" style="font-size:12px;">Нет подключённых игроков</span></div><div class="gq-section-title" style="margin-top:8px;opacity:0.4;">Задание:</div><textarea id="gq-quest-text" placeholder="Введите текст задания..."></textarea><div class="gq-section-title" style="margin-top:8px;opacity:0.4;">Привязать метку на карте:</div><select id="gq-link-marker"><option value="">— без метки —</option></select><div class="gq-actions"><button onclick="gqAddQuest()" style="flex:1;">ВЫДАТЬ ЗАДАНИЕ</button><button onclick="gqDeselectAll()" class="text-muted" style="border-color:currentColor;">СНЯТЬ ВЫБОР</button></div></div>
+            <div class="gq-section" style="flex:1;"><div class="gq-section-title">Активные задания</div><div id="gq-active-quests-wrap"><span class="text-muted" style="font-size:12px;">Нет активных заданий</span></div></div>
+        </div></div>
+        <div id="gm-panel-radio" class="gm-panel"><h3 class="mt-0 flex-shrink-0">РАДИОСТАНЦИЯ СМОТРИТЕЛЯ</h3><div class="d-flex gap-sm mb-sm flex-shrink-0" style="flex-wrap:wrap;"><input type="text" id="gm-radio-sender" placeholder="Имя станции" class="input--compact" style="width:25%;min-width:120px;"><input type="text" id="gm-radio-msg" placeholder="Текст передачи..." class="input--compact flex-1"><button onclick="sendRadioGM()" class="btn--compact">В ЭФИР</button><button onclick="clearRadioGM()" class="btn--compact btn--danger">ОЧИСТИТЬ</button></div><div class="flex-shrink-0" style="font-size:12px;opacity:0.8;margin-bottom:5px;">ИСТОРИЯ:</div><div id="gm-radio-history" class="panel panel--inset flex-1" style="overflow-y:auto;"><div class="text-muted">Ожидание истории...</div></div></div>
+        <div id="gm-panel-map" class="gm-panel"><div class="d-flex-col flex-1" style="overflow:hidden;"><h3 class="m-0 flex-shrink-0" style="margin-bottom:4px;">КАРТА ОВЕРСИРА <span class="text-muted" style="font-size:11px;">(метки видны всем)</span></h3>
+            <div id="gm-map-toolbar"><select id="gm-marker-type" onchange="gmUpdateMarkerTypeUI()"><optgroup label="── Квесты ──"><option value="quest_normal">◈ Обычное</option><option value="quest_important">◆ Важное</option><option value="quest_critical">⬟ Критическое</option></optgroup><optgroup label="── Прочее ──"><option value="skull">☠ Опасность</option><option value="star">★ Интерес</option><option value="exclamation">! Внимание</option><option value="eye">◉ Наблюдение</option><option value="flag">⚑ Флаг</option><option value="cross_gm">✛ Медпункт</option></optgroup></select><select id="gm-marker-color"><option value="#ff6b35">🟠</option><option value="#ff3333">🔴</option><option value="#ffd700">🟡</option><option value="#4af626">🟢</option><option value="#00bfff">🔵</option><option value="#ff69b4">🩷</option><option value="#ffffff">⚪</option></select><input type="text" id="gm-marker-label" placeholder="Подпись..." style="width:150px;" maxlength="40"><span id="gm-quest-link-group" class="d-flex items-center gap-sm"><span class="text-meta">Игрок:</span><select id="gm-marker-link-player" style="max-width:140px;" onchange="gmUpdateQuestDropdown(this.value)"><option value="">—</option></select><span class="text-meta">Квест:</span><select id="gm-marker-link-quest" style="max-width:190px;"><option value="">—</option></select></span><button onclick="window.gmMapClearAll()" class="btn--compact btn--danger" style="margin-left:auto;">✕ ВСЕ</button></div>
+            <div id="gm-map-canvas-wrap"><div id="gm-map-canvas-inner"><img id="gm-map-img" src="/map.webp" crossorigin="anonymous" draggable="false" alt="Карта"><div class="scanline-gm-map"></div></div><div id="gm-map-markers-overlay"></div><div id="gm-map-zoom-controls"><button onclick="gmMapZoom(0.25)">+</button><button onclick="gmMapZoom(-0.25)">−</button><button onclick="gmMapReset()" style="font-size:10px;">↺</button></div><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;opacity:0.3;pointer-events:none;white-space:nowrap;">ЛКМ — метка | зажать — перемещение | колесо — зум</div></div>
+            <div id="gm-map-legend"><span style="color:#4af626;">◈ Обычное</span><span style="color:#ffd700;">◆ Важное</span><span style="color:#ff3333;">⬟ Критическое</span><span class="text-muted">☠ ★ ! ◉ ⚑ ✛</span></div>
+            <div class="text-muted flex-shrink-0" style="font-size:11px;margin-top:6px;">Активные метки:</div><div id="gm-map-markers-list"><span class="text-muted">Меток нет</span></div>
+        </div></div>
+    </div>
+</div>
+
+<!-- AppState должен быть доступен до inline-скрипта -->
+<script src="/js/appState.js"></script>
+
+<!-- CORE: socket + bootstrap -->
+<script>
+const socket = io();
+
+setInterval(() => {
+    const now = new Date(), c = document.getElementById('clock');
+    if (c) c.innerText = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+}, 1000);
+
+socket.on('connect', () => {
+    const ind = document.getElementById('conn-indicator');
+    if (ind) { ind.className = 'connection-status connection-status--ok'; ind.title = 'Подключено'; }
+    const s = localStorage.getItem('pipboy_name');
+    if (s && !AppState.get('playerId')) socket.emit('player_login', { username: s });
+});
+socket.on('disconnect', () => {
+    const ind = document.getElementById('conn-indicator');
+    if (ind) { ind.className = 'connection-status connection-status--lost'; ind.title = 'Соединение потеряно...'; }
+});
+
+window.switchTab = function(name) {
+    const mods = AppState.get('modules'); if (!mods[name]) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${name}`)?.classList.add('active');
+    AppState.set('currentTab', name);
+    mods[name].render(document.getElementById('module-content'), AppState.get('playerState'));
+};
+
+function rerenderTab(t) {
+    const mods = AppState.get('modules');
+    if (AppState.get('currentTab') === t && mods[t]) mods[t].render(document.getElementById('module-content'), AppState.get('playerState'));
+}
+
+window.onload = () => { const s = localStorage.getItem('pipboy_name'); if (s) socket.emit('player_login', { username: s }); };
+function login() { const u = document.getElementById('username').value.trim(); if (u) socket.emit('player_login', { username: u }); }
+function logout() { localStorage.removeItem('pipboy_name'); location.reload(); }
+
+socket.on('login_success', data => {
+    AppState.set('playerId', data.id); AppState.set('playerState', data.state);
+    localStorage.setItem('pipboy_name', data.username);
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('pipboy-screen').classList.remove('hidden');
+    document.getElementById('player-name-display').innerText = data.username.toUpperCase();
+    const mods = AppState.get('modules'), tabs = Object.keys(mods);
+    if (!AppState.get('currentTab') && tabs.length) window.switchTab(tabs[0]);
+    else if (mods[AppState.get('currentTab')]) mods[AppState.get('currentTab')].render(document.getElementById('module-content'), data.state);
+});
+socket.on('login_error', msg => {
+    document.getElementById('error-msg').innerText = msg;
+    if (AppState.get('playerId')) { AppState.set('playerId', null); AppState.set('playerState', null); localStorage.removeItem('pipboy_name'); location.reload(); }
+});
+socket.on('server_event', ev => {
+    if (ev.type === 'state_update' && ev.target === AppState.get('playerId')) { AppState.set('playerState', ev.payload); rerenderTab(AppState.get('currentTab')); }
+});
+
+window.removePlayerQuest = function(idx) { const ps = AppState.get('playerState'); if (!ps?.home?.quests) return; const q = [...ps.home.quests]; q.splice(idx,1); socket.emit('player_update_state', { playerId: AppState.get('playerId'), newState: { home: { quests: q } } }); };
+window.sendPlayerReply = function(msg, npc) { if (msg && AppState.get('playerId') && npc) socket.emit('player_reply', { playerId: AppState.get('playerId'), message: msg, targetNpc: npc }); };
+
+// Радио (данные)
+socket.on('radio_history', h => { AppState.set('radioLog', h); _radioPreview(); rerenderTab('radio'); });
+socket.on('receive_radio', msg => { AppState.get('radioLog').push(msg); _radioPreview(); rerenderTab('radio'); });
+function _radioPreview() { const rl = AppState.get('radioLog'); if (!rl.length) return; const l = rl[rl.length-1]; let ps = AppState.get('playerState')||{}; if(!ps.home)ps.home={}; ps.home.radio=`[${l.sender||'НЕИЗВЕСТНЫЙ'}]: ${l.message}`; AppState.set('playerState',ps); rerenderTab('home'); }
+
+// ЛС (данные)
+socket.on('dm_history', h => { AppState.set('dmLog', h); _dmPreview(); if(window.recalcMailBadge) window.recalcMailBadge(); rerenderTab('messages'); });
+socket.on('receive_dm', msg => { AppState.get('dmLog').push(msg); _dmPreview(); if(window.recalcMailBadge) window.recalcMailBadge(); rerenderTab('messages'); });
+function _dmPreview() { const dl = AppState.get('dmLog'); if (!dl.length) return; const l = dl[dl.length-1]; let ps = AppState.get('playerState')||{}; if(!ps.home)ps.home={}; ps.home.messages=`[${l.fromPlayer?'ВЫ':(l.npcName||'НЕИЗВЕСТНЫЙ')}]: ${l.message}`; AppState.set('playerState',ps); rerenderTab('home'); }
+</script>
+
+<!-- Остальные модули (порядок важен!) -->
+<script src="/js/markerRegistry.js"></script>
+<script src="/js/gm.js"></script>
+<script src="/js/gmMap.js"></script>
+<script src="/modules/home.js"></script>
+<script src="/modules/radio.js"></script>
+<script src="/modules/messages.js"></script>
+<script src="/modules/map.js"></script>
+</body>
+</html>

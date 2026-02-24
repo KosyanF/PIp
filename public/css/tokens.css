@@ -1,0 +1,62 @@
+/* ==========================================
+ * tokens.css — Дизайн-токены Stable-Tec OS
+ * ========================================== */
+
+:root {
+    /* ── Цвета ── */
+    --color-bg:          #051505;
+    --color-surface:     rgba(5, 21, 5, 0.6);
+    --color-surface-2:   rgba(5, 21, 5, 0.7);
+    --color-surface-3:   rgba(0, 0, 0, 0.4);
+    --color-primary:     #4af626;
+    --color-primary-dim: rgba(74, 246, 38, 0.2);
+    --color-primary-ghost:rgba(74, 246, 38, 0.05);
+    --color-border:      rgba(74, 246, 38, 0.35);
+    --color-border-dim:  rgba(74, 246, 38, 0.15);
+    --color-border-strong:rgba(74, 246, 38, 0.45);
+    --color-muted:       rgba(74, 246, 38, 0.5);
+    --color-danger:      #ff3333;
+    --color-warning:     #ffd700;
+    --color-accent:      #ff6b35;
+    --color-text:        #4af626;
+    --color-text-inv:    #051505;
+    --color-white:       #ffffff;
+
+    /* legacy compat */
+    --pip-green: #4af626;
+    --pip-bg:    #051505;
+
+    /* ── Типографика ── */
+    --font-mono: 'Consolas', 'Courier New', monospace;
+    --fs-xs:   9px;
+    --fs-sm:   11px;
+    --fs-md:   13px;
+    --fs-base: 14px;
+    --fs-lg:   16px;
+    --fs-xl:   20px;
+    --fs-2xl:  22px;
+
+    /* ── Отступы ── */
+    --sp-1:  4px;
+    --sp-2:  8px;
+    --sp-3:  12px;
+    --sp-4:  16px;
+    --sp-5:  20px;
+    --sp-6:  24px;
+
+    /* ── Тени и свечение ── */
+    --glow-sm:    0 0 5px var(--color-primary);
+    --glow-md:    0 0 10px rgba(74, 246, 38, 0.1);
+    --glow-lg:    0 0 15px rgba(74, 246, 38, 0.08);
+    --glow-border:0 0 8px var(--color-primary);
+    --glow-text:  0 0 2px var(--color-primary);
+
+    /* ── Z-индексы ── */
+    --z-base:      1;
+    --z-markers:   3;
+    --z-overlay:   5;
+    --z-controls:  10;
+    --z-toast:     20;
+    --z-modal:     50;
+    --z-scanlines: 100;
+}

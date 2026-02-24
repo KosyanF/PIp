@@ -1,0 +1,15 @@
+[
+  {
+    "id": "gm_1771937912075",
+    "type": "eye",
+    "nx": 0.056825466101117286,
+    "ny": 0.5997913218196851,
+    "label": "Башня",
+    "color": "#ff6b35",
+    "linkedQuest": "dddd",
+    "linkedPlayers": [
+      "blake",
+      "sol"
+    ]
+  }
+]
