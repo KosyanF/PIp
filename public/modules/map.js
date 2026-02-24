@@ -140,7 +140,12 @@
     window.mapZoom = function(d) { scale = Math.max(getMinScale(), Math.min(20, scale+d)); applyTransform(); };
     window.mapReset = function() { scale=1; offX=0; offY=0; applyTransform(); };
     window.mapSelectType = function(t) { selectedType = t; updateTypeButtons(); };
-    window.mapToggleDeleteMode = function() { deleteMode = !deleteMode; updateDeleteBtn(); };
+    window.mapToggleDeleteMode = function() {
+        deleteMode = !deleteMode;
+        updateDeleteBtn();
+        const wrap = document.getElementById('map-wrap');
+        if (wrap) wrap.classList.toggle('delete-mode', deleteMode);
+    };
     window.focusMapMarker = function(id) { focusedMarkerId = id; window.switchTab('map'); };
     window.getQuestMarker = function(qt) { return getGM().find(m => m.linkedQuest === qt) || null; };
 

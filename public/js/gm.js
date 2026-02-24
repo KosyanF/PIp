@@ -45,6 +45,9 @@
         document.getElementById('gm-login').classList.add('hidden');
         document.getElementById('gm-screen').classList.remove('hidden');
         AppState.set('gmPlayersData', data.players);
+        // Заполнить session ID
+        const sid = document.getElementById('gm-session-id');
+        if (sid) sid.textContent = 'СЕССИЯ: ' + socket.id.slice(-6).toUpperCase();
         renderGMTable();
         gmUpdatePlayerDropdown();
         renderGQPanel();
