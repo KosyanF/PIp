@@ -95,11 +95,11 @@
 
                     <div class="home-achievements">
                         <div class="achv-label">Достижения</div>
-                        <div class="achv-slot">———</div>
-                        <div class="achv-slot">———</div>
-                        <div class="achv-slot">———</div>
-                        <div class="achv-slot">———</div>
-                        <div class="achv-slot">———</div>
+                        <div class="achv-slot"></div>
+                        <div class="achv-slot"></div>
+                        <div class="achv-slot"></div>
+                        <div class="achv-slot"></div>
+                        <div class="achv-slot"></div>
                     </div>
                 </div>
             `;

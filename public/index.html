@@ -41,7 +41,14 @@
     </div>
     <!-- GM ЭКРАН -->
     <div id="gm-screen" class="hidden">
-        <div class="d-flex justify-between items-center flex-shrink-0 mb-sm"><h2 class="m-0">ТЕРМИНАЛ СМОТРИТЕЛЯ</h2><button onclick="logout()" class="btn--compact">ВЫЙТИ</button></div>
+        <div class="gm-header-bar">
+            <h2>ТЕРМИНАЛ СМОТРИТЕЛЯ</h2>
+            <div class="gm-header-meta">
+                <span>ДОПУСК: ОВЕРСИР</span>
+                <span id="gm-session-id">СЕССИЯ: —</span>
+                <button onclick="logout()" class="btn--compact" style="color:var(--gm-accent);border-color:var(--gm-border);">ВЫЙТИ</button>
+            </div>
+        </div>
         <div id="gm-nav">
             <button class="gm-tab active" onclick="switchGMTab('players')">ЖИТЕЛИ</button>
             <button class="gm-tab" onclick="switchGMTab('quests')">КВЕСТЫ</button>
