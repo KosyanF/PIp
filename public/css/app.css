@@ -1072,6 +1072,91 @@ body::after {
 
 /* GM: CRT-эффекты общие для всей страницы, не зависят от экрана */
 
+/* ── GM global color override: все интерактивные элементы внутри GM — amber ── */
+#gm-screen button,
+#gm-screen .btn {
+    color: var(--gm-accent);
+    border-color: var(--gm-border);
+}
+#gm-screen button:hover,
+#gm-screen .btn:hover {
+    background: var(--gm-accent);
+    color: var(--color-text-inv);
+    box-shadow: 0 0 8px rgba(232,160,37,0.3);
+}
+#gm-screen .btn--danger {
+    color: var(--color-danger);
+    border-color: rgba(255,51,51,0.35);
+}
+#gm-screen .btn--danger:hover {
+    background: var(--color-danger);
+    color: var(--color-text-inv);
+    box-shadow: 0 0 8px rgba(255,51,51,0.4);
+}
+#gm-screen input,
+#gm-screen textarea,
+#gm-screen select {
+    color: var(--gm-accent);
+    border-color: var(--gm-border);
+}
+#gm-screen input:focus,
+#gm-screen textarea:focus,
+#gm-screen select:focus {
+    border-color: var(--gm-accent);
+    background: var(--gm-accent-ghost);
+}
+#gm-screen select option { background: var(--color-bg); color: var(--gm-accent); }
+#gm-screen h3 { color: var(--gm-accent); }
+#gm-screen .text-muted { color: var(--gm-accent); opacity: 0.4; }
+#gm-screen .panel__header { color: var(--gm-accent); opacity: 0.5; }
+#gm-screen .panel--inset { border-color: var(--gm-border); }
+/* DM text inside GM stays green for readability */
+#gm-screen .gm-dm-entry { color: var(--color-text); }
+#gm-screen .gm-debug-json { color: var(--color-primary); }
+
+/* ======================================
+   17b. AUDIO CONTROLS
+   ====================================== */
+
+#audio-panel {
+    border-radius: var(--radius-sm);
+}
+
+#audio-panel input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--color-border);
+    border: none;
+    outline: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+}
+
+#audio-panel input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(74,246,38,0.4);
+}
+
+#audio-panel input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    border: none;
+}
+
+#audio-panel label {
+    flex-shrink: 0;
+    font-size: var(--fs-xs);
+    letter-spacing: 1px;
+}
+
 /* ======================================
    18. UTILITIES
    ====================================== */

@@ -2,5 +2,11 @@
   "port": 3000,
   "maxPlayers": 5,
   "gmPassword": "admin",
-  "modules": []
+  "modules": [],
+  "discord": {
+    "enabled": true,
+    "botToken": "1475982987861688511",
+    "channelId": "",
+    "webhookUrl": "https://discord.com/api/webhooks/1475949157159010466/D-H4aVEOQ5D_tlAzABPXY5qtBXbUAxsBvezeN7lDTKjB7WlsOBOeWrPKkyii0fKjuCtf"
+  }
 }

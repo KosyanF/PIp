@@ -16,6 +16,7 @@
         <h2>STABLE-TEC OS v1.0</h2>
         <div id="error-msg" class="text-danger mb-sm"></div>
         <input type="text" id="username" placeholder="Введите имя жителя..." maxlength="20">
+        <input type="text" id="discord-tag" placeholder="Discord ID (ПКМ на профиль → Копировать ID)" maxlength="22" style="font-size:var(--fs-md);opacity:0.7;">
         <button onclick="login()">ВОЙТИ В СИСТЕМУ</button><br><br>
         <button onclick="showGMLogin()" class="btn--subtle">[Доступ Смотрителя]</button>
     </div>
@@ -33,7 +34,36 @@
             <div class="d-flex items-center gap-sm">
                 <span id="conn-indicator" class="connection-status connection-status--ok" title="Подключено"></span>
                 <span id="clock" style="margin-right:10px;">00:00:00</span>
+                <button id="audio-toggle-btn" onclick="toggleAudioPanel()" class="btn--compact" title="Звук" style="font-size:16px;padding:4px 8px;">🔊</button>
                 <button onclick="logout()" class="btn--compact" style="border-style:dashed;">[ВЫЙТИ]</button>
+            </div>
+        </div>
+        <!-- Audio settings panel -->
+        <div id="audio-panel" class="hidden" style="border:1px solid var(--color-border);padding:var(--sp-3);margin-bottom:var(--sp-2);background:var(--color-surface);font-size:var(--fs-sm);">
+            <div class="d-flex justify-between items-center mb-sm">
+                <span style="letter-spacing:2px;opacity:0.5;font-size:var(--fs-xs);text-transform:uppercase;">Настройки звука</span>
+                <button onclick="toggleAudioPanel()" class="btn--compact" style="font-size:10px;padding:2px 6px;">✕</button>
+            </div>
+            <div class="d-flex items-center gap-sm mb-sm">
+                <label style="width:70px;opacity:0.6;">Общая:</label>
+                <input type="range" min="0" max="100" id="vol-master" oninput="setAudioVol('master',this.value)" style="flex:1;">
+                <button onclick="toggleAudioMute()" id="audio-mute-btn" class="btn--compact" style="font-size:12px;padding:2px 8px;">MUTE</button>
+            </div>
+            <div class="d-flex items-center gap-sm mb-sm">
+                <label style="width:70px;opacity:0.6;">UI:</label>
+                <input type="range" min="0" max="100" id="vol-ui" oninput="setAudioVol('ui',this.value)" style="flex:1;">
+            </div>
+            <div class="d-flex items-center gap-sm mb-sm">
+                <label style="width:70px;opacity:0.6;">События:</label>
+                <input type="range" min="0" max="100" id="vol-event" oninput="setAudioVol('event',this.value)" style="flex:1;">
+            </div>
+            <div class="d-flex items-center gap-sm mb-sm">
+                <label style="width:70px;opacity:0.6;">Фон:</label>
+                <input type="range" min="0" max="100" id="vol-ambient" oninput="setAudioVol('ambient',this.value)" style="flex:1;">
+            </div>
+            <div class="d-flex items-center gap-sm">
+                <label style="width:70px;opacity:0.6;">Радио:</label>
+                <input type="range" min="0" max="100" id="vol-radio" oninput="setAudioVol('radio',this.value)" style="flex:1;">
             </div>
         </div>
         <div class="nav-tabs" id="nav-tabs"></div>
@@ -72,6 +102,7 @@
 
 <!-- AppState должен быть доступен до inline-скрипта -->
 <script src="/js/appState.js"></script>
+<script src="/js/audio.js"></script>
 
 <!-- CORE: socket + bootstrap -->
 <script>
@@ -84,21 +115,32 @@ setInterval(() => {
 
 socket.on('connect', () => {
     const ind = document.getElementById('conn-indicator');
+    const wasDisconnected = ind && ind.classList.contains('connection-status--lost');
     if (ind) { ind.className = 'connection-status connection-status--ok'; ind.title = 'Подключено'; }
+    if (wasDisconnected && window.Audio) window.Audio.play('connectionRestored');
     const s = localStorage.getItem('pipboy_name');
     if (s && !AppState.get('playerId')) socket.emit('player_login', { username: s });
 });
 socket.on('disconnect', () => {
     const ind = document.getElementById('conn-indicator');
     if (ind) { ind.className = 'connection-status connection-status--lost'; ind.title = 'Соединение потеряно...'; }
+    if (window.Audio) window.Audio.play('connectionLost');
 });
 
 window.switchTab = function(name) {
     const mods = AppState.get('modules'); if (!mods[name]) return;
+    const prev = AppState.get('currentTab');
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById(`tab-${name}`)?.classList.add('active');
     AppState.set('currentTab', name);
     mods[name].render(document.getElementById('module-content'), AppState.get('playerState'));
+    // Audio
+    if (window.Audio) {
+        window.Audio.play('tabSwitch');
+        // Radio ambient: включить при входе, выключить при уходе
+        if (name === 'radio') window.Audio.startRadioNoise();
+        else if (prev === 'radio') window.Audio.stopRadioNoise();
+    }
 };
 
 function rerenderTab(t) {
@@ -106,8 +148,12 @@ function rerenderTab(t) {
     if (AppState.get('currentTab') === t && mods[t]) mods[t].render(document.getElementById('module-content'), AppState.get('playerState'));
 }
 
-window.onload = () => { const s = localStorage.getItem('pipboy_name'); if (s) socket.emit('player_login', { username: s }); };
-function login() { const u = document.getElementById('username').value.trim(); if (u) socket.emit('player_login', { username: u }); }
+window.onload = () => { const s = localStorage.getItem('pipboy_name'); if (s) socket.emit('player_login', { username: s, discordTag: localStorage.getItem('pipboy_discord') || '' }); };
+function login() {
+    const u = document.getElementById('username').value.trim();
+    const d = document.getElementById('discord-tag').value.trim();
+    if (u) { if (d) localStorage.setItem('pipboy_discord', d); socket.emit('player_login', { username: u, discordTag: d }); }
+}
 function logout() { localStorage.removeItem('pipboy_name'); location.reload(); }
 
 socket.on('login_success', data => {
@@ -116,30 +162,71 @@ socket.on('login_success', data => {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('pipboy-screen').classList.remove('hidden');
     document.getElementById('player-name-display').innerText = data.username.toUpperCase();
+    // Audio: boot + ambient
+    if (window.Audio) { window.Audio.unlock(); window.Audio.play('bootUp'); setTimeout(() => window.Audio.startAmbient(), 600); }
     const mods = AppState.get('modules'), tabs = Object.keys(mods);
     if (!AppState.get('currentTab') && tabs.length) window.switchTab(tabs[0]);
     else if (mods[AppState.get('currentTab')]) mods[AppState.get('currentTab')].render(document.getElementById('module-content'), data.state);
 });
 socket.on('login_error', msg => {
     document.getElementById('error-msg').innerText = msg;
+    if (window.Audio) window.Audio.play('error');
     if (AppState.get('playerId')) { AppState.set('playerId', null); AppState.set('playerState', null); localStorage.removeItem('pipboy_name'); location.reload(); }
 });
 socket.on('server_event', ev => {
-    if (ev.type === 'state_update' && ev.target === AppState.get('playerId')) { AppState.set('playerState', ev.payload); rerenderTab(AppState.get('currentTab')); }
+    if (ev.type === 'state_update' && ev.target === AppState.get('playerId')) {
+        const oldQuests = AppState.get('playerState')?.home?.quests || [];
+        AppState.set('playerState', ev.payload);
+        rerenderTab(AppState.get('currentTab'));
+        // Новый квест?
+        const newQuests = ev.payload?.home?.quests || [];
+        if (newQuests.length > oldQuests.length && window.Audio) window.Audio.play('newQuest');
+    }
 });
 
-window.removePlayerQuest = function(idx) { const ps = AppState.get('playerState'); if (!ps?.home?.quests) return; const q = [...ps.home.quests]; q.splice(idx,1); socket.emit('player_update_state', { playerId: AppState.get('playerId'), newState: { home: { quests: q } } }); };
-window.sendPlayerReply = function(msg, npc) { if (msg && AppState.get('playerId') && npc) socket.emit('player_reply', { playerId: AppState.get('playerId'), message: msg, targetNpc: npc }); };
+window.removePlayerQuest = function(idx) { const ps = AppState.get('playerState'); if (!ps?.home?.quests) return; const q = [...ps.home.quests]; q.splice(idx,1); socket.emit('player_update_state', { playerId: AppState.get('playerId'), newState: { home: { quests: q } } }); if (window.Audio) window.Audio.play('questComplete'); };
+
+// Timestamp с устройства пользователя
+function _ts() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
+
+window.sendPlayerReply = function(msg, npc) { if (msg && AppState.get('playerId') && npc) { socket.emit('player_reply', { playerId: AppState.get('playerId'), message: msg, targetNpc: npc, timestamp: _ts() }); if (window.Audio) window.Audio.play('sendMessage'); } };
 
 // Радио (данные)
 socket.on('radio_history', h => { AppState.set('radioLog', h); _radioPreview(); rerenderTab('radio'); });
-socket.on('receive_radio', msg => { AppState.get('radioLog').push(msg); _radioPreview(); rerenderTab('radio'); });
+socket.on('receive_radio', msg => { AppState.get('radioLog').push(msg); _radioPreview(); rerenderTab('radio'); if (window.Audio) window.Audio.play('newRadio'); });
 function _radioPreview() { const rl = AppState.get('radioLog'); if (!rl.length) return; const l = rl[rl.length-1]; let ps = AppState.get('playerState')||{}; if(!ps.home)ps.home={}; ps.home.radio=`[${l.sender||'НЕИЗВЕСТНЫЙ'}]: ${l.message}`; AppState.set('playerState',ps); rerenderTab('home'); }
 
 // ЛС (данные)
 socket.on('dm_history', h => { AppState.set('dmLog', h); _dmPreview(); if(window.recalcMailBadge) window.recalcMailBadge(); rerenderTab('messages'); });
-socket.on('receive_dm', msg => { AppState.get('dmLog').push(msg); _dmPreview(); if(window.recalcMailBadge) window.recalcMailBadge(); rerenderTab('messages'); });
+socket.on('receive_dm', msg => { AppState.get('dmLog').push(msg); _dmPreview(); if(window.recalcMailBadge) window.recalcMailBadge(); rerenderTab('messages'); if (!msg.fromPlayer && window.Audio) window.Audio.play('newMessage'); });
 function _dmPreview() { const dl = AppState.get('dmLog'); if (!dl.length) return; const l = dl[dl.length-1]; let ps = AppState.get('playerState')||{}; if(!ps.home)ps.home={}; ps.home.messages=`[${l.fromPlayer?'ВЫ':(l.npcName||'НЕИЗВЕСТНЫЙ')}]: ${l.message}`; AppState.set('playerState',ps); rerenderTab('home'); }
+
+// ── Audio controls ──
+window.toggleAudioPanel = function() {
+    const p = document.getElementById('audio-panel');
+    if (!p) return;
+    const show = p.classList.toggle('hidden');
+    if (!show) syncAudioSliders(); // показали — обновить значения
+};
+function syncAudioSliders() {
+    if (!window.Audio) return;
+    ['master','ui','event','ambient','radio'].forEach(ch => {
+        const sl = document.getElementById('vol-' + ch);
+        if (sl) sl.value = Math.round(window.Audio.getVolume(ch) * 100);
+    });
+    const btn = document.getElementById('audio-mute-btn');
+    if (btn) btn.textContent = window.Audio.isEnabled() ? 'MUTE' : 'UNMUTE';
+    const icon = document.getElementById('audio-toggle-btn');
+    if (icon) icon.textContent = window.Audio.isEnabled() ? '🔊' : '🔇';
+}
+window.setAudioVol = function(ch, val) {
+    if (window.Audio) window.Audio.setVolume(ch, val / 100);
+};
+window.toggleAudioMute = function() {
+    if (!window.Audio) return;
+    window.Audio.setEnabled(!window.Audio.isEnabled());
+    syncAudioSliders();
+};
 </script>
 
 <!-- Остальные модули (порядок важен!) -->
