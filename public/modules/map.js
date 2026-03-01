@@ -89,6 +89,7 @@
                 const el = _els.get(marker.id);
                 if (el) { el.remove(); _els.delete(marker.id); }
                 updateDeleteBtn();
+                if (window.Audio) window.Audio.play('deleteMarker');
             }
         });
     }

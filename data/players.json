@@ -1,7 +1,22 @@
 {
+  "317": {
+    "id": "317",
+    "username": "317",
+    "state": {}
+  },
   "sol": {
     "id": "sol",
     "username": "Sol",
+    "state": {
+      "home": {
+        "quests": []
+      }
+    },
+    "discordTag": "1002924343401123990"
+  },
+  "blake_hole": {
+    "id": "blake_hole",
+    "username": "Blake_Hole",
     "state": {}
   }
 }

@@ -5,9 +5,16 @@
 
 const log = require('./logger');
 const V = require('./validation');
+const discord = require('./discord');
 
 module.exports = function setupSocketHandlers(io, socket, ctx) {
     const { rateLimiter, playersState, dmHistory, radioHistory, gmMapMarkers, storage, GM_PASSWORD, config } = ctx;
+
+    // Инициализировать Discord при первом вызове
+    if (!setupSocketHandlers._discordInited) {
+        setupSocketHandlers._discordInited = true;
+        discord.init(log, config);
+    }
 
     function rateCheck(event) {
         if (!rateLimiter.check(socket.id, event)) {
@@ -72,6 +79,9 @@ module.exports = function setupSocketHandlers(io, socket, ctx) {
         }
         if (ps[playerId]) { ps[playerId].username = username; }
         else { ps[playerId] = { id: playerId, username, state: {} }; log.info('AUTH', `Новый игрок: ${username}`); }
+        // Сохранить discord tag если передан
+        const discordTag = V.isString(data?.discordTag, 40) || '';
+        if (discordTag) ps[playerId].discordTag = discordTag;
         storage.savePlayers(ps);
         socket.data.role = 'player'; socket.data.playerId = playerId; socket.join(playerId);
         socket.emit('login_success', { id: playerId, username, state: ps[playerId].state });
@@ -150,20 +160,23 @@ module.exports = function setupSocketHandlers(io, socket, ctx) {
         if (!requireGM() || !rateCheck('send_dm')) return;
         const v = V.validateDMData(data);
         if (!v || !playersState()[v.targetId]) return;
-        const msg = { npcName: v.npcName, message: v.message, timestamp: new Date().toLocaleTimeString('ru-RU') };
+        const msg = { npcName: v.npcName, message: v.message, timestamp: v.timestamp || new Date().toLocaleTimeString('ru-RU') };
         const dm = dmHistory();
         if (!dm[v.targetId]) dm[v.targetId] = [];
         dm[v.targetId].push(msg);
         storage.rotateDM(dm, v.targetId); storage.saveDM(dm);
         io.to(v.targetId).emit('receive_dm', msg);
         io.emit('gm_update_dm', { playerId: v.targetId, history: dm[v.targetId] });
+        // Discord webhook
+        const player = playersState()[v.targetId];
+        if (player) discord.notifyDM(player.username, player.discordTag || '', v.npcName, v.message);
     });
 
     socket.on('player_reply', (data) => {
         if (!rateCheck('player_reply')) return;
         const v = V.validatePlayerReply(data);
         if (!v || !requirePlayer(v.playerId) || !playersState()[v.playerId]) return;
-        const msg = { npcName: v.targetNpc, message: v.message, timestamp: new Date().toLocaleTimeString('ru-RU'), fromPlayer: true };
+        const msg = { npcName: v.targetNpc, message: v.message, timestamp: v.timestamp || new Date().toLocaleTimeString('ru-RU'), fromPlayer: true };
         const dm = dmHistory();
         if (!dm[v.playerId]) dm[v.playerId] = [];
         dm[v.playerId].push(msg);
@@ -203,10 +216,12 @@ module.exports = function setupSocketHandlers(io, socket, ctx) {
         if (!rateCheck('send_radio')) return;
         const v = V.validateRadioData(data);
         if (!v) return;
-        const msg = { sender: v.sender, message: v.message, timestamp: new Date().toLocaleTimeString('ru-RU') };
+        const msg = { sender: v.sender, message: v.message, timestamp: v.timestamp || new Date().toLocaleTimeString('ru-RU') };
         const rh = radioHistory();
         rh.push(msg); storage.rotateRadio(rh); storage.saveRadio(rh);
         io.emit('receive_radio', msg);
+        // Discord webhook — радиосводка
+        discord.notifyRadio(v.sender, v.message);
     });
 
     socket.on('clear_radio_history', () => {
@@ -214,6 +229,18 @@ module.exports = function setupSocketHandlers(io, socket, ctx) {
         ctx._clearRadio();
         io.emit('radio_history', []);
         log.info('GM', 'Радио очищено');
+    });
+
+    socket.on('gm_delete_radio', (index) => {
+        if (!requireGM()) return;
+        const idx = V.isNumber(index, 0, 10000);
+        if (idx === null) return;
+        const rh = radioHistory();
+        if (idx >= rh.length) return;
+        rh.splice(idx, 1);
+        storage.saveRadio(rh);
+        io.emit('radio_history', rh);
+        log.info('GM', `Радиосводка удалена: [${idx}]`);
     });
 
     socket.on('add_marker', (d) => { io.emit('new_marker', d); });

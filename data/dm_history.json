@@ -1,1 +1,14 @@
-{}
+{
+  "sol": [
+    {
+      "npcName": "ПП",
+      "message": "Аа",
+      "timestamp": "23:50:59"
+    },
+    {
+      "npcName": "GG",
+      "message": "F",
+      "timestamp": "23:08:08"
+    }
+  ]
+}

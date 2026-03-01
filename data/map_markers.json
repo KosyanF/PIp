@@ -1,15 +1,52 @@
 [
   {
-    "id": "gm_1771937912075",
-    "type": "eye",
-    "nx": 0.056825466101117286,
-    "ny": 0.5997913218196851,
-    "label": "Башня",
+    "id": "gm_1772362689472",
+    "type": "star",
+    "nx": 0.14685206745705442,
+    "ny": 0.5285518288938521,
+    "label": "Академия",
     "color": "#ff6b35",
-    "linkedQuest": "dddd",
-    "linkedPlayers": [
-      "blake",
-      "sol"
-    ]
+    "linkedQuest": null,
+    "linkedPlayers": []
+  },
+  {
+    "id": "gm_1772362784884",
+    "type": "quest_important",
+    "nx": 0.15164925318970376,
+    "ny": 0.5430817602430794,
+    "label": "Взлётная площадка",
+    "color": "#ffd700",
+    "linkedQuest": null,
+    "linkedPlayers": []
+  },
+  {
+    "id": "gm_1772362810275",
+    "type": "eye",
+    "nx": 0.06227821327320934,
+    "ny": 0.6031105693450268,
+    "label": "Башня",
+    "color": "#ff69b4",
+    "linkedQuest": null,
+    "linkedPlayers": []
+  },
+  {
+    "id": "gm_1772362830696",
+    "type": "star",
+    "nx": 0.13741375302998973,
+    "ny": 0.5379805358176962,
+    "label": "Королевские оранжереи",
+    "color": "#ff69b4",
+    "linkedQuest": null,
+    "linkedPlayers": []
+  },
+  {
+    "id": "gm_1772363164115",
+    "type": "eye",
+    "nx": 0.1289967808880392,
+    "ny": 0.6097612632584958,
+    "label": "Хиллвиль",
+    "color": "#ff3333",
+    "linkedQuest": null,
+    "linkedPlayers": []
   }
 ]

@@ -94,7 +94,9 @@ function validateDMData(data) {
     const message = isNonEmptyString(data.message, LIMITS.MESSAGE_MAX);
     if (!message) return null;
 
-    return { targetId, npcName, message };
+    const timestamp = isString(data.timestamp, 20) || null;
+
+    return { targetId, npcName, message, timestamp };
 }
 
 // Валидация данных радио
@@ -105,8 +107,9 @@ function validateRadioData(data) {
     if (!message) return null;
 
     const sender = isNonEmptyString(data.sender, LIMITS.RADIO_SENDER_MAX) || 'СИСТЕМА СТОЙЛА';
+    const timestamp = isString(data.timestamp, 20) || null;
 
-    return { sender, message };
+    return { sender, message, timestamp };
 }
 
 // Валидация ответа игрока
@@ -120,8 +123,9 @@ function validatePlayerReply(data) {
     if (!message) return null;
 
     const targetNpc = isNonEmptyString(data.targetNpc, LIMITS.NPC_NAME_MAX) || 'НЕИЗВЕСТНЫЙ';
+    const timestamp = isString(data.timestamp, 20) || null;
 
-    return { playerId, message, targetNpc };
+    return { playerId, message, targetNpc, timestamp };
 }
 
 // Валидация username при логине

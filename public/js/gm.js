@@ -45,9 +45,10 @@
         document.getElementById('gm-login').classList.add('hidden');
         document.getElementById('gm-screen').classList.remove('hidden');
         AppState.set('gmPlayersData', data.players);
-        // Заполнить session ID
         const sid = document.getElementById('gm-session-id');
         if (sid) sid.textContent = 'СЕССИЯ: ' + socket.id.slice(-6).toUpperCase();
+        // Audio: GM boot
+        if (window.Audio) { window.Audio.unlock(); window.Audio.play('gmBoot'); setTimeout(() => window.Audio.startAmbient(), 600); }
         renderGMTable();
         gmUpdatePlayerDropdown();
         renderGQPanel();
@@ -146,7 +147,7 @@
         const npc = document.getElementById(`dm-npc-${pid}`).value.trim();
         const msg = document.getElementById(`dm-msg-${pid}`).value.trim();
         if (!msg) return;
-        socket.emit('send_dm', { targetId: pid, npcName: npc || 'СИСТЕМА СТОЙЛА', message: msg });
+        socket.emit('send_dm', { targetId: pid, npcName: npc || 'СИСТЕМА СТОЙЛА', message: msg, timestamp: _ts() });
         document.getElementById(`dm-msg-${pid}`).value = '';
     };
 
@@ -155,7 +156,7 @@
         const s = document.getElementById('gm-radio-sender').value.trim() || 'СИСТЕМА СТОЙЛА';
         const m = document.getElementById('gm-radio-msg').value.trim();
         if (!m) return;
-        socket.emit('send_radio', { sender: s, message: m });
+        socket.emit('send_radio', { sender: s, message: m, timestamp: _ts() });
         document.getElementById('gm-radio-msg').value = '';
     };
 
@@ -171,10 +172,17 @@
         if (!c) return;
         const radioLog = AppState.get('radioLog');
         if (!radioLog.length) { c.innerHTML = '<div class="text-muted">Эфир пуст...</div>'; return; }
-        c.innerHTML = [...radioLog].reverse().map(l =>
-            `<div class="gm-dm-entry"><span class="gm-dm-entry__meta">[${l.timestamp}]</span> <b class="text-accent">${l.sender || 'НЕИЗВЕСТНЫЙ'}</b>: ${l.message}</div>`
+        c.innerHTML = [...radioLog].map((l, i) => [l, i]).reverse().map(([l, origIdx]) =>
+            `<div class="gm-dm-entry" style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div><span class="gm-dm-entry__meta">[${l.timestamp}]</span> <b class="text-accent">${l.sender || 'НЕИЗВЕСТНЫЙ'}</b>: ${l.message}</div>
+                <button onclick="deleteRadioGM(${origIdx})" class="btn--icon btn--danger" title="Удалить">✕</button>
+            </div>`
         ).join('');
     }
+
+    window.deleteRadioGM = function (idx) {
+        if (confirm('Удалить эту радиосводку?')) socket.emit('gm_delete_radio', idx);
+    };
 
     // ── КВЕСТЫ GM ──
     let gqSelectedPlayers = new Set();
